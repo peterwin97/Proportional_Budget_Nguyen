@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+#include <fstream>
 #include "Input_Validation_Extended.h"
 #include "monthlyBudgetClass.h"
 #include "functions.h"
@@ -74,12 +75,77 @@ void splashScreen(vector<double> &income, vector<double> &expenses, double &inco
 }
 
 void showMenu(){
-  cout << "MENU" << endl; 
-  cout << "1. Change income" << endl;
+  string clearScreen = "\033[2J\033[1;1H";
+  string colorTeal = "\x1b[36;1m";
+  string colorB = "\x1b[94;1m";
+  string colorP = "\x1b[95;1m";
+  string colorW = "\x1b[37;1m";
+  string underline = "\x1b[0;4m";
+  string underlineW = "\x1b[37;4m";
+  string reset = "\x1b[0m";
+
+  cout << colorTeal << "MENU" << reset << endl; 
+  cout << "\n1. Change income" << endl;
   cout << "2. Change expenses" << endl;
   cout << "3. Change percentages" << endl;
+  cout << "4. Export to .txt file" << endl;
+  cout << "\n0. Exit program" << endl;
+  cout << "Please make a choice: " << colorB;
 }
+void handleOption(int choice, vector<double> &income, vector<double> &expenses, vector<string> expenseList, int &p1, int &p2){
+  string colorTeal = "\x1b[36;1m";
+  string clearScreen = "\033[2J\033[1;1H";
+  string colorB = "\x1b[94;1m";
+  string colorR = "\x1b[31;1m";
+  string reset = "\x1b[0m";
+  
+  cout << reset;
+  if (choice == 1) {
+    double tempNum;
+    cout << colorTeal << "\nChange Income" << reset << endl << endl;
+    for(int i = 0; i < income.size()-2; i++){
+      if(i < income.size()-3){
+        cout << i+1 << ". Paycheck " << i+1 << endl;
+      } else {
+        cout << i+1 << ". Tips" << endl;
+        cout << i+2 << ". Refund Check" << endl;
+        cout << i+3 << ". Amazon Refund" << endl;
+      }
+    }
+    cout << "\nPlease make a choice: ";
+    choice = validateInt(choice);
+    cout << "Enter new value: ";
+    tempNum = validateDouble(tempNum);
+    income[choice-1] = tempNum;
 
+  } else if (choice == 2) {
+    double tempNum;
+
+    cout << colorTeal << "\nChange Expenses" << reset << endl << endl;
+
+    for(int i = 0; i < expenseList.size(); i++){
+      cout << i+1 << ". " << expenseList[i] << endl;
+    }
+
+    cout << "\nPlease make a choice: ";
+    choice = validateInt(choice);
+    cout << "Enter new value: ";
+    tempNum = validateDouble(tempNum);
+    expenses[choice-1] = tempNum;
+  } else if (choice == 3) {
+    int i;
+    cout << colorTeal << "\nChange Percentage" << reset << endl;
+    do {
+      cout << "\nEnter new percentage for Person 1 (0-100): " << colorB;
+      i = validateInt(i);
+        if(i < 0 || i > 100){
+          cout << colorR << "Number must be between 0 and 100" << reset;
+        }
+    } while (i < 0 || i > 100);
+  p1 = i;
+  p2 = 100 - i;
+  }
+}
 void showBudget(MonthlyBudget p1, MonthlyBudget p2, vector<double> income, vector<double> expenses, vector<string> expenseList, int percent1, int percent2){
   string clearScreen = "\033[2J\033[1;1H";
   string colorTeal = "\x1b[36;1m";
@@ -95,7 +161,7 @@ void showBudget(MonthlyBudget p1, MonthlyBudget p2, vector<double> income, vecto
   double doubleP1Perc, doubleP2Perc, incomeTotal, expensesTotal, person1Total, person2Total;
 
   cout << endl;
-  cout << colorTeal << setw(60) << "MONTHLY BUDGET - PROPORTIONAL" << reset << endl << endl;
+  cout << colorTeal << setw(65) << "MONTHLY BUDGET - PROPORTIONAL" << reset << endl << endl;
   cout << colorB << setw(58) << percent1 << "%" << setw(15) << percent2 << "%" << reset << endl;
   cout << setw(27) << underlineW << setw(12) << "Income" << setw(14) << "Expenses" << setw(16) << "Person 1" << setw(16) << "Person 2"<< setw(9) << reset << endl << endl;
 
@@ -120,8 +186,9 @@ void showBudget(MonthlyBudget p1, MonthlyBudget p2, vector<double> income, vecto
     for(int i =0; i < 4; i ++){
             money2.pop_back();
         }       
-  double dP1Perc = percent1/100;
-  double dP2Perc = percent2/100;
+  
+  double dP1Perc = percent1/100.00;
+  double dP2Perc = percent2/100.00;
   for(int i = 0; i < expenseList.size(); i++){
     vPercent1.push_back(expenses[i]*dP1Perc);
     vPercent2.push_back(expenses[i]*dP2Perc);
@@ -174,10 +241,11 @@ void showBudget(MonthlyBudget p1, MonthlyBudget p2, vector<double> income, vecto
   cout << setw(21) <<  "What's Left:" << setw(11) << remainder << reset << endl;
 }
 int main() {
+  ofstream out("monthlyBudget.txt");
   vector<double> income;
   vector<double> expenses;
   double incomeTotal = 0.00, expenseTotal = 0.00;
-  int p1Percent = 0, p2Percent = 0;
+  int p1Percent = 0, p2Percent = 0, choice = 5;
   vector<MonthlyBudget> person(2);
   vector<string> expenseList = {"Mortgage/Rent","Electric","Gas (Home)","Water","Savings", "Entertainment", "Clothes", "Shoes", "Vending Machine","Credit Card Payments", "Car Payments", "Car Insurance", "Car Maintenance", "Car Gas", "School Boooks", "Food - Groceries", "Food - Dining Out", "Cleaning Supplies", "Personal Care", "Charity", "Day Care", "Pet Care", "Cell Phone", "Internet","Cable/Sat","Streaming Services", "Amazon.com"};
 
@@ -185,7 +253,31 @@ int main() {
   
   person[0].setValues(expenses, p1Percent);
   person[1].setValues(expenses, p2Percent);
+  do{
+    string colorB = "\x1b[94;1m";
+    string colorR = "\x1b[31;1m";
+    string reset = "\x1b[0m";
 
-  showBudget(person[0], person[1], income, expenses, expenseList, p1Percent, p2Percent);
-  
+    showBudget(person[0], person[1], income, expenses, expenseList, p1Percent, p2Percent);
+    cout << endl << endl;
+    showMenu();
+    choice = validateInt(choice);
+    if(choice > 4){
+      do{
+      cout << colorR << "ERROR: " << choice << " is not a valid choice" << reset << endl;
+      cout << "Please make a choice: " << colorB;
+      choice = validateInt(choice);
+      cout << reset;
+      } while (choice > 4);
+    } 
+
+    cout << "\033[2J\033[1;1H";
+    showBudget(person[0], person[1], income, expenses, expenseList, p1Percent, p2Percent);
+    cout << endl << endl;
+    handleOption(choice, income, expenses, expenseList, p1Percent, p2Percent);
+    if (choice == 4){
+      
+    }
+    cout << "\033[2J\033[1;1H";
+  } while (choice != 0);
 }
